@@ -1,0 +1,235 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Atomyze Sandbox</title>
+
+    <link rel="stylesheet" href="/doc/css/site.css" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto+Slab:700|Roboto&display=fallback"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <a href="/doc/" class="link--home">Atomyze Sandbox</a>
+      <a href="/doc/post/about" class="link--about">About</a>
+    </header>
+    <main>
+      <h1>ACL</h1>
+<p>Функции системного чейнкода ACL.</p>
+<h2>init - инициализация смартконтракта</h2>
+<p><strong>args:</strong> adminSKI, validatorsCount, validator1, validator2, validator3</p>
+<ul>
+<li><strong>adminSKI</strong> string в формате hex.EncodeToString - в нашей системе это ski от приватного ключа crypto/peerOrganizations/atomyze/users/Admin@atomyze/msp/keystore/fd4b1c0c2bbef8fc73ec489d44ced8f57742a6036601b8d73ed0328e6741d7ca_sk</li>
+<li><strong>validatorsCount</strong> int - кол-во валидаторов которые должны обязательно подтвердить транзакцию. кол-во публичных ключей, которое будет передано в параметре validators</li>
+<li><strong>validators</strong> - список публичных ключей (алгоритм ed25519) валидаторов в формате base58, который будет использоваться для проверки подписи при выполнении функций в ACL, например при изменении публичного ключа changePublicKey</li>
+</ul>
+<p>После инициализации данные хранятся в стейте по ключу &quot;__init&quot; (по этой причине нельзя запускать пир с бд couchdb)</p>
+<h3>Алгоритм подписи валидаторами</h3>
+<h4>1. Создание message</h4>
+<pre><code class="language-go">func GenerateMessage(validatorPublicKeys []string, methodName string, args []string) string {
+    nonce := strconv.FormatInt(nowMillisecond(), 10)
+    result := []string{methodName}
+    result = append(result, args...)
+    result = append(result, nonce)
+    for _, publicKey := range validatorPublicKeys {
+        result = append(result, publicKey)
+    }
+    return strings.Join(result, &quot;\n&quot;)
+}
+</code></pre>
+<h4>2. Подпись валидатором</h4>
+<pre><code class="language-go">func SignMessage(signerInfo SignerInfo, result []string) ([]byte, [32]byte, error) {
+message := sha3.Sum256([]byte(strings.Join(result, &quot;&quot;)))
+sig := ed25519.Sign(signerInfo.PrivateKey, message[:])
+if !ed25519.Verify(signerInfo.PublicKey, message[:], sig) {
+err := fmt.Errorf(&quot;valid signature rejected&quot;)
+log.Error(&quot;ed25519.Verify&quot;, zap.Error(err))
+return nil, message, err
+}
+return sig, message, nil
+}
+</code></pre>
+<p>Описание общего процесса подписи и формата hex/base58 подписи</p>
+<pre><code class="language-go">// сообщение созданное на шаге 1
+var message
+result := strings.Split(message, &quot;\n&quot;)
+signatureBytes, _, err := service.SignMessage(signerInfo, result)
+if err != nil {
+log.FError(&quot;Error SignMessage&quot;, err)
+panic(err)
+return
+}
+// в зависимости от метода нужно выбрать в каком формате хранятся подписи
+//signature := hex.EncodeToString(signatureBytes)
+signature := base58.Encode(signatureBytes)
+</code></pre>
+<h4>3 Отправка запроса в блокчейн</h4>
+<pre><code class="language-go">// сообщение созданное на шаге 1
+var message
+// набор подписей валидаторов созданный на шаге 2
+var signatures
+var result []string
+for _, s := range strings.Split(message, &quot;\n&quot;) {
+result = append(result, s)
+}
+messageWithSig := append(result[1:], signatures...)
+</code></pre>
+<p>Все методы возвращают Response
+Далее в секции out будет описываться только то, что лежит в Payload поле peer.Response.</p>
+<h2>addUser</h2>
+<p>Создание кошелька пользователя
+<strong>аргументы:</strong> pk, kycHash, userId, isIndustrial</p>
+<ul>
+<li><strong>pk</strong> - публичный ключ пользователя в кодировке base58</li>
+<li><strong>kycHash</strong> - KYC хеш, некоторая информация которая идентифицирет пользователя на стороне клиента, для тестов можно использовать любой стринг</li>
+<li><strong>userId</strong> - ID юзера</li>
+<li><strong>isIndustrial</strong> - “true” или “false”</li>
+</ul>
+<p><strong>out</strong>: ---</p>
+<h2>addMultisig</h2>
+<p>Создание мультисиг-кошелька
+<strong>аргументы:</strong> N, nonce, ...pubkeys, ...signatures</p>
+<ul>
+<li><strong>N</strong> - достаточное количество подписей из общего числа подписей</li>
+<li><strong>nonce</strong> - нонс в миллисекундах</li>
+<li><strong>...pubkeys</strong> - публичные ключи участников кошелька</li>
+<li><strong>..signatures</strong> - подписи участников кошелька</li>
+</ul>
+<p><strong>out</strong>: ---</p>
+<h2>addToList</h2>
+<p>Помещение адреса в грейлист/блэклист
+<strong>аргументы</strong>: address, type</p>
+<ul>
+<li><strong>address</strong> - адрес в кодировке base58 check</li>
+<li><strong>type</strong> - “black” или “gray”</li>
+</ul>
+<p><strong>out</strong>: ---</p>
+<h2>delFromList</h2>
+<p>Удаление адреса из грейлист/блэклист
+<strong>аргументы</strong>: address, type</p>
+<ul>
+<li><strong>address</strong> - адрес в кодировке base58 check</li>
+<li><strong>type</strong> - “black” или “gray”</li>
+</ul>
+<p><strong>out</strong>: ---</p>
+<h2>checkKeys</h2>
+<p>Проверка находится ли адрес, связанный с этими ключами, в грей/
+блэклисте
+<strong>аргументы</strong>: pubkeys</p>
+<ul>
+<li><strong>pubkeys</strong> - строка из конкатенированных публичных ключей (с сепаратором “/”) в кодировке base58</li>
+</ul>
+<p><strong>out</strong>:</p>
+<pre><code>message AclResponse {
+    AccountInfo account     = 1;
+    SignedAddress address   = 2;
+}
+</code></pre>
+<h2>checkAddress</h2>
+<p>Позволяет проверить, находится ли конкретный адрес в грейлисте
+<strong>аргументы</strong>: address</p>
+<ul>
+<li><strong>address</strong> - адрес в кодировке base58 check</li>
+</ul>
+<p><strong>out</strong>:</p>
+<pre><code>message Address {
+    string userID                     = 1;
+    bytes address                     = 2;
+    bool isIndustrial                 = 3;
+    bool isMultisig                   = 4;
+}
+</code></pre>
+<h2>сhangePublicKey</h2>
+<p>Замена публичного ключа для адреса
+<strong>Аргументы</strong>: address, reason, reasonId, newkey, nonce, ...pubkeys, ...signatures</p>
+<ul>
+<li><strong>address</strong> - адрес в кодировке base58 check (адрес для которого меняется публичный ключ)</li>
+<li><strong>reason</strong> - причина изменения ключа, строка</li>
+<li><strong>reasonId</strong> - строка</li>
+<li><strong>newkey</strong> - новый публичный ключ для указанного адреса (параметр address) в кодировке base58</li>
+<li><strong>nonce</strong> - нонс в миллисекундах</li>
+<li><strong>...pubkeys</strong> - публичные ключи валидаторов, каждый ключ в формате base58</li>
+<li><strong>..signatures</strong> - подписи валидаторов, каждая подпись в формате hex</li>
+</ul>
+<p><strong>out</strong>: ---</p>
+<h2>changePublicKeyWithBase58Signature</h2>
+<p>**ВНИМАНИЕ!!! Для этого метода подпись работает как в foundation
+**
+Замена публичного ключа для адреса
+<strong>аргументы</strong>: address, reason, reasonId, newkey, nonce, ...pubkeys, ...signatures</p>
+<ul>
+<li><strong>address</strong> - адрес в кодировке base58 check (адрес для которого меняется публичный ключ)</li>
+<li><strong>reason</strong> - причина изменения ключа, строка</li>
+<li><strong>reasonId</strong> - строка</li>
+<li><strong>newkey</strong> - новый публичный ключ для указанного адреса (параметр address) в кодировке base58</li>
+<li><strong>nonce</strong> - нонс в миллисекундах</li>
+<li><strong>...pubkeys</strong> - публичные ключи валидаторов, каждый ключ в формате base58</li>
+<li><strong>..signatures</strong> - подписи валидаторов, каждая подпись в формате base58</li>
+</ul>
+<p><strong>out</strong>: ---</p>
+<h2>changeMultisigPublicKey</h2>
+<p>Замена публичного ключа в мультисиге
+<strong>аргументы</strong>: address, oldkey, newkey, reason, reasonId, nonce, ...pubkeys, ...signatures</p>
+<ul>
+<li><strong>address</strong> - адрес в кодировке base58 check</li>
+<li><strong>oldkey</strong> - старый публичный ключ в кодировке base58</li>
+<li><strong>newkey</strong> - новый публичный ключ в кодировке base58</li>
+<li><strong>reason</strong> - причина изменения ключа, строка</li>
+<li><strong>reasonId</strong> - строка</li>
+<li><strong>nonce</strong> - нонс в миллисекундах</li>
+<li><strong>...pubkeys</strong> - публичные ключи валидаторов</li>
+<li><strong>..signatures</strong> - подписи валидаторов</li>
+</ul>
+<p><strong>out</strong>: ---</p>
+<h2>getAccountInfo</h2>
+<p>Получение информации об аккаунте (KYC хеш, признаки graylist, blacklist)
+<strong>аргументы</strong>: address</p>
+<ul>
+<li><strong>address</strong> - адрес в кодировке base58 check</li>
+</ul>
+<p><strong>out</strong>: JSON-serialized</p>
+<pre><code>message AccountInfo {
+    string kycHash      = 1;
+    bool grayListed     = 2;
+    bool blackListed    = 3;
+}
+</code></pre>
+<h2>getAddresses</h2>
+<p>Список зарегистрированных адресов.
+<strong>аргументы</strong>: pageSize bookmark</p>
+<ul>
+<li><strong>pageSize</strong> -</li>
+<li><strong>bookmark</strong> -
+out: JSON-serialized</li>
+</ul>
+<pre><code>AddrsWithPagination
+</code></pre>
+<h2>setAccountInfo</h2>
+<p>Установка account info для адреса (KYC хеш, признаки graylist, blacklist)
+<strong>аргументы</strong>: address, KYChash, isGraylisted, isBlacklisted</p>
+<ul>
+<li><strong>address</strong> - адрес в кодировке base58 check</li>
+<li><strong>KYChash</strong> - KYC хеш</li>
+<li><strong>isGraylisted</strong> - “true” или “false”</li>
+<li><strong>isBlacklisted</strong> - “true” или “false”</li>
+</ul>
+<p><strong>out</strong>: ---</p>
+<h2>setkyc</h2>
+<p>Обновление KYC хеша для определенного аккаунта по адресу
+<strong>аргументы</strong>: address, KYChash, nonce, ...pubkeys, ...signatures</p>
+<ul>
+<li><strong>address</strong> - адрес в кодировке base58 check</li>
+<li><strong>KYChash</strong> - KYC хеш, строка</li>
+<li><strong>nonce</strong> - нонс в миллисекундах</li>
+<li><strong>...pubkeys</strong> - публичные ключи валидаторов</li>
+<li><strong>..signatures</strong> - подписи валидаторов</li>
+</ul>
+<p><strong>out</strong>: ---</p>
+
+    </main>
+    <footer>&copy; Atomyze Sandbox</footer>
+  </body>
+</html>

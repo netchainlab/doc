@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Atomyze Sandbox</title>
+
+    <link rel="stylesheet" href="/doc/css/site.css" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto+Slab:700|Roboto&display=fallback"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <a href="/doc/" class="link--home">Atomyze Sandbox</a>
+      <a href="/doc/post/about" class="link--about">About</a>
+    </header>
+    <main>
+      <h1>Base Token - базовый токен.</h1>
+<h2>BuyToken - покупка токена.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">TxBuyToken(sender types.Sender, amount *big.Int, currency string) error
+
+</code></pre>
+<p>Подписывается пользователем. При подписи эмитентом возвращается ошибка. В рамках работы метода проверяются рейсы и лимиты, поэтому они должны быть заданы заранее.</p>
+<p>Пример из теста:</p>
+<pre><code class="language-go">issuer.SignedInvoke(&quot;vt&quot;, &quot;setRate&quot;, &quot;buyToken&quot;, &quot;usd&quot;, &quot;100000000&quot;)
+issuer.SignedInvoke(&quot;vt&quot;, &quot;setLimits&quot;, &quot;buyToken&quot;, &quot;usd&quot;, &quot;1&quot;, &quot;10&quot;)
+</code></pre>
+<h2>BuyBack - обратный выкуп токена.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">TxBuyBack(sender types.Sender, amount *big.Int, currency string) error
+
+</code></pre>
+<p>Подписывается пользователем. При подписи эмитентом возвращается ошибка. Аналогично предыдущему методу, производится проверка рейтов и лимитов.</p>
+<p>Пример из теста:</p>
+<pre><code class="language-go">issuer.SignedInvoke(&quot;vt&quot;, &quot;setRate&quot;, &quot;buyBack&quot;, &quot;usd&quot;, &quot;100000000&quot;)
+issuer.SignedInvoke(&quot;vt&quot;, &quot;setLimits&quot;, &quot;buyBack&quot;, &quot;usd&quot;, &quot;1&quot;, «10&quot;)
+
+</code></pre>
+<h2>Metadata - запрос метадаты токена.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">QueryMetadata() (metadata, error)
+
+</code></pre>
+<p>Дополнительные условий не требуется.</p>
+<h2>BalanceOf - запрос баланса.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">QueryBalanceOf(address types.Address) (*big.Int, error)
+
+</code></pre>
+<p>Дополнительных условий не требуется.</p>
+<h2>AllowedBalanceOf - запрос allowed баланса.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">QueryAllowedBalanceOf(address types.Address, token string)
+
+</code></pre>
+<p>Дополнительных условий не требуется.</p>
+<h2>DocumentsList - запрос документов, прикреплённых к токену.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">QueryDocumentsList() ([]core.Doc, error)
+
+</code></pre>
+<p>Дополнительных условий не требуется.</p>
+<h2>AddDocs - добавление документов к токену.</h2>
+<p>Подписывается эмитентом.
+Сигнатура метода:</p>
+<pre><code class="language-go">TxAddDocs(sender types.Sender, rawDocs string) error
+</code></pre>
+<h2>DeleteDoc - удаление документа.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">TxDeleteDoc(sender types.Sender, docID string) error
+
+</code></pre>
+<p>Подписывается эмитентом.</p>
+<h2>SetRate - установка рейта.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">TxSetRate(sender types.Sender, dealType string, currency string, rate *big.Int) error
+
+</code></pre>
+<p>Подписывается эмитентом.</p>
+<h2>SetLimits - установка лимита.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">TxSetLimits(sender types.Sender, dealType string, currency string, min *big.Int, max *big.Int) error
+
+</code></pre>
+<p>Подписывается эмитентом.</p>
+<h2>Transfer - передача токенов на указанный адрес.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">TxTransfer(sender types.Sender, to types.Address, amount *big.Int, ref string) error
+
+</code></pre>
+<p>Количество передаваемых токенов не должно быть нулевым, токены нельзя переслать самому себе, если установлена комиссия и комиссионная валюта не пустая, то с отправителя будет списана комиссия.</p>
+<h2>PredictFee - расчёт комиссии.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">QueryPredictFee(amount *big.Int) (predict, error)
+
+</code></pre>
+<p>Дополнительных условий не требуется.</p>
+<h2>SetFee - установка комиссии.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">TxSetFee(sender types.Sender, currency string, fee *big.Int, floor *big.Int, cap *big.Int) error
+
+</code></pre>
+<p>Подписывается FeeSetter’ом.
+Производится проверка на значение комиссии - она должна быть не более 100%, также
+производится проверка на значения лимитов floor и cap.</p>
+<h2>SetFeeAddress - установка комиссионного адреса.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">TxSetFeeAddress(sender types.Sender, address types.Address) error
+
+</code></pre>
+<p>Подписывется FeeAddressSetter’ом.</p>
+<h2>SwapBegin - начало процесса атомарного свопа.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">TxSwapBegin(sender types.Sender, token string, contractTo string, amount *big.Int, hash types.Hex) (string, error)
+
+</code></pre>
+<p>Дополнительных условий не требуется.</p>
+<h2>SwapCancel - сброс свопа.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">TxSwapCancel(sender types.Sender, swapID string) error
+
+</code></pre>
+<p>Дополнительных условий не требуется.</p>
+<h2>SwapGet - информация по свопу.</h2>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">QuerySwapGet(swapID string) (*proto.Swap, error)
+
+</code></pre>
+<p>Дополнительных условий не требуется.</p>
+<h2>swapDone - завершение свопа пользователем.</h2>
+<p>Здесь вызывается локальный метод контракта swapUserDone.
+Сигнатура метода:</p>
+<pre><code class="language-go">swapUserDone(bc BaseContractInterface, swapID string, key string) peer.Response
+
+</code></pre>
+<p>Дополнительных условий не требуется.</p>
+<h2>deleteRate - удалить рейт</h2>
+<p>Подписывается эмитентом
+Аргументы: dealType, currency</p>
+<ol>
+<li>dealType - тип сделки
+пример: &quot;название типа сделки - создается методом setRate&quot;</li>
+<li>currency - валюта
+пример: &quot;BA&quot;</li>
+</ol>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">TxDeleteRate(sender types.Sender, dealType string, currency string)
+
+</code></pre>
+<h2>allowedIndustrialBalanceTransfer - перевод средств</h2>
+<p>подписывается отправителем средств
+Аргументы: toAddress assets reason</p>
+<ol>
+<li>toAddress - адрес куда будут переведены средства</li>
+<li>assets - список переводимых валют и их кол-во
+пример '{&quot;Assets&quot;:[{&quot;group&quot;:&quot;BA02_A1goldbar.1&quot;,&quot;amount&quot;:&quot;1&quot;},
+{&quot;group&quot;:&quot;BA02_B1silverbar.1&quot;,&quot;amount&quot;:&quot;1&quot;}]}'</li>
+<li>reason - причина
+Пример запроса:</li>
+</ol>
+<pre><code class="language-go">allowedIndustrialBalanceTransfer $toAddress '{&quot;Assets&quot;:[{&quot;group&quot;:&quot;BA02_A1goldbar.1&quot;,&quot;amount&quot;:&quot;1&quot;},{&quot;group&quot;:&quot;BA02_B1silverbar.1&quot;,&quot;amount&quot;:&quot;1&quot;}]}' 'ref'
+</code></pre>
+<p>Сигнатура метода:</p>
+<pre><code class="language-go">TxAllowedGroupBalanceTransfer(sender types.Sender, to types.Address, rawAssets string, ref string)
+</code></pre>
+
+    </main>
+    <footer>&copy; Atomyze Sandbox</footer>
+  </body>
+</html>
