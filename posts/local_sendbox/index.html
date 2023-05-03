@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Atomyze Sandbox</title>
+
+    <link rel="stylesheet" href="/css/site.css" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto+Slab:700|Roboto&display=fallback"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <a href="/" class="link--home">Atomyze Sandbox</a>
+      <a href="/post/about" class="link--about">About</a>
+    </header>
+    <main>
+      <h2>Инструкция развертывания локальной среды разработки для платформы Атомайз</h2>
+<h3>Рекомендации:</h3>
+<p>Для работа с песочницей вам понадобятся навыки работы с:</p>
+<ul>
+<li><a href="https://githowto.com/ru">git</a></li>
+<li><a href="https://docs.docker.com/">docker</a></li>
+<li><a href="https://hyperledger-fabric.readthedocs.io/en/release-2.4/">Hyperledger Fabric</a></li>
+</ul>
+<p>Также на компьютере должны быть установлены:</p>
+<ul>
+<li>git</li>
+<li>docker</li>
+<li>docker-compose</li>
+</ul>
+<h2>Развертывание платформы версии HLF 2.4 и ордерингом на базе smartBFT.</h2>
+<p>Требуется выполнить следующие шаги:</p>
+<h3>1. Скачиваем скрипты и артифакты для развертывания</h3>
+<p>Скачиваем песочницу:</p>
+<pre><code>git clone ssh://git@gitlab.project-karma.com:2224/atomyze/library/test/sandbox.git
+</code></pre>
+<p><img src="/doc/uploads/sb1.png" alt="sb1"></p>
+<p>Скачиваем заготовки системных чейнкодов:</p>
+<pre><code>git clone ssh://git@gitlab.project-karma.com:2224/atomyze/library/test/dummy-cc.git
+</code></pre>
+<p><img src="/doc/uploads/sb2.png" alt="sb2"></p>
+<p>Логинимся в реджестки для выкачивания образов:</p>
+<pre><code>docker login registry.project-karma.com -u student
+passwd: SBZeAj7gv7RZze2sks_U
+</code></pre>
+<h3>2. Подготовка к развертыванию песочницы</h3>
+<p>Переносим чейнкоды которые были скачаны шагом выше в соответствующую директорию для установки:</p>
+<pre><code>cp -r ./dummy-cc/public/* ./sandbox/atomyze-bft-2.4-devel/tool/data/channel/public/
+</code></pre>
+<p>и переходим в директорию песочницы которая соответствует окружению:</p>
+<pre><code>cd ./sandbox/atomyze-bft-2.4-devel
+</code></pre>
+<h3>3. Запуск песочницы.</h3>
+<p>Запускаем:</p>
+<pre><code>. ./env-hlf-2.4.7 &amp;&amp; docker-compose up --detach
+</code></pre>
+<p>После выполнения команды мы увидим процесс создания песочницы, нас интересуют только статусы “Started”</p>
+<p><img src="/doc/uploads/sb3.png" alt="sb3"></p>
+<p>отследить окончание процесса запуска мы можем следующей командой:</p>
+<pre><code>docker-compose logs tool | grep &quot;consistent state&quot;
+</code></pre>
+<p><img src="/doc/uploads/sb4.png" alt="sb4"></p>
+<p>Если увидели этот вывод, значит сеть запустилась.</p>
+<h3>4. Удаление песочницы</h3>
+<p>Для полного удаления песочницы:</p>
+<pre><code>docker-compose down -v
+</code></pre>
+<h3>5. Запросы к чейнкоду</h3>
+<p>Для дополнительной проверки можно сделать запрос query к чейнкоду.
+Например обращение к чейнкоду fiat и получение его metadata:</p>
+<pre><code>docker-compose exec tool query public fiat fiat '{&quot;Function&quot;:&quot;metadata&quot;, &quot;Args&quot;:[&quot;&quot;]}'
+</code></pre>
+<p><img src="/doc/uploads/sb5.png" alt="sb5">
+Результат получаем в формате JSON.</p>
+
+    </main>
+    <footer>&copy; Atomyze Sandbox</footer>
+  </body>
+</html>
