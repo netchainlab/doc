@@ -1,3 +1,7 @@
+---
+layout: base-layout.njk
+---
+
 # Аккаунтинг
 Created Четверг 20 апреля 2023
 

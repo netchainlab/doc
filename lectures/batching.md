@@ -1,3 +1,7 @@
+---
+layout: base-layout.njk
+---
+
 # Батчинг атомайз
 Created Четверг 13 апреля 2023
 
