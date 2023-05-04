@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Atomyze Sandbox</title>
+
+    <link rel="stylesheet" href="/doc/css/site.css" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto+Slab:700|Roboto&display=fallback"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <a href="/doc/" class="link--home">Atomyze Sandbox</a>
+      <a href="/doc/" class="link--about">статьи</a>
+    </header>
+    <main>
+      <p>INPROGRESS</p>
+<h1>Простые операция над fiat токеном</h1>
+<h1>Взаимодействие с observer</h1>
+<p>Observer - внешний по отношению к HLF сервис, индексирующий историческую информацию леджера - то что поступает в лог. Создан на модульной основе, каждый модуль или layer индексирует свой уровень информации от общего к частному. Layer 1 или L1 - индексирует базовые  сущности - блоки и транзакции доступен по адресу http://51.250.110.24:9010/ или на локальном хосте по порту 9010 для локально установленного сендбокса. Layer 2 или L2 индексирует базовые сущности атомайз, такие как преимаджи, батчи, межканальные свопы. Доступен по адресу http://51.250.110.24:9020/  или на локальном хосте по порту 9020 для локально установленного сендбокса.
+Сервис работает на основе graphQL - https://graphql.org/</p>
+<h2>Список каналов</h2>
+<p>http://51.250.110.24:9010/</p>
+<pre><code>query{
+  channels{
+    name
+    countBlocks
+  }
+}
+</code></pre>
+<pre><code>{
+	&quot;info&quot;: {
+		&quot;_postman_id&quot;: &quot;9504a8de-97ca-4310-8262-129d70c04e8e&quot;,
+		&quot;name&quot;: &quot;test&quot;,
+		&quot;schema&quot;: &quot;https://schema.getpostman.com/json/collection/v2.1.0/collection.json&quot;,
+		&quot;_exporter_id&quot;: &quot;6728230&quot;,
+		&quot;_collection_link&quot;: &quot;https://crimson-shadow-50398.postman.co/workspace/anoidea~f341bc34-e7ce-40ed-906e-75555e4c9acf/collection/6728230-9504a8de-97ca-4310-8262-129d70c04e8e?action=share&amp;creator=6728230&amp;source=collection_link&quot;
+	},
+	&quot;item&quot;: [
+		{
+			&quot;name&quot;: &quot;acl create user u1&quot;,
+			&quot;protocolProfileBehavior&quot;: {
+				&quot;followAuthorizationHeader&quot;: true
+			},
+			&quot;request&quot;: {
+				&quot;auth&quot;: {
+					&quot;type&quot;: &quot;noauth&quot;
+				},
+				&quot;method&quot;: &quot;POST&quot;,
+				&quot;header&quot;: [
+					{
+						&quot;key&quot;: &quot;Authorization&quot;,
+						&quot;value&quot;: &quot;Bearer test&quot;,
+						&quot;type&quot;: &quot;text&quot;
+					}
+				],
+				&quot;body&quot;: {
+					&quot;mode&quot;: &quot;raw&quot;,
+					&quot;raw&quot;: &quot;{\n  \&quot;args\&quot;: [\n    \&quot;RUtERlg2MW15SHRoVkxVNnE2VHlLakQ0QVQzeERYYzVjSkZEOGREZzJKWlk=\&quot;,\n    \&quot;dGVzdA==\&quot;,\n    \&quot;dTE=\&quot;,\n    \&quot;dHJ1ZQo=\&quot;\n  ],\n    \&quot;channel\&quot;:\&quot;acl\&quot;,\n    \&quot;chaincodeId\&quot;:\&quot;acl\&quot;,\n    \&quot;fcn\&quot;:\&quot;addUser\&quot;\n}&quot;,
+					&quot;options&quot;: {
+						&quot;raw&quot;: {
+							&quot;language&quot;: &quot;json&quot;
+						}
+					}
+				},
+				&quot;url&quot;: {
+					&quot;raw&quot;: &quot;51.250.110.24:9001/invoke&quot;,
+					&quot;host&quot;: [
+						&quot;51&quot;,
+						&quot;250&quot;,
+						&quot;110&quot;,
+						&quot;24&quot;
+					],
+					&quot;port&quot;: &quot;9001&quot;,
+					&quot;path&quot;: [
+						&quot;invoke&quot;
+					]
+				}
+			},
+			&quot;response&quot;: []
+		},
+		{
+			&quot;name&quot;: &quot;acl create user u2&quot;,
+			&quot;protocolProfileBehavior&quot;: {
+				&quot;followAuthorizationHeader&quot;: true
+			},
+			&quot;request&quot;: {
+				&quot;auth&quot;: {
+					&quot;type&quot;: &quot;noauth&quot;
+				},
+				&quot;method&quot;: &quot;POST&quot;,
+				&quot;header&quot;: [
+					{
+						&quot;key&quot;: &quot;Authorization&quot;,
+						&quot;value&quot;: &quot;Bearer test&quot;,
+						&quot;type&quot;: &quot;text&quot;
+					}
+				],
+				&quot;body&quot;: {
+					&quot;mode&quot;: &quot;raw&quot;,
+					&quot;raw&quot;: &quot;{\n  \&quot;args\&quot;: [\n    \&quot;NGNqa2J2dGNBQllwd290UnBlMWVUN1RhelIzQkdrcTZSN2NGRkRnRjVlNGk=\&quot;,\n    \&quot;dGVzdA==\&quot;,\n    \&quot;dTI=\&quot;,\n    \&quot;dHJ1ZQo=\&quot;\n  ],\n    \&quot;channel\&quot;:\&quot;acl\&quot;,\n    \&quot;chaincodeId\&quot;:\&quot;acl\&quot;,\n    \&quot;fcn\&quot;:\&quot;addUser\&quot;\n}&quot;,
+					&quot;options&quot;: {
+						&quot;raw&quot;: {
+							&quot;language&quot;: &quot;json&quot;
+						}
+					}
+				},
+				&quot;url&quot;: {
+					&quot;raw&quot;: &quot;51.250.110.24:9001/invoke&quot;,
+					&quot;host&quot;: [
+						&quot;51&quot;,
+						&quot;250&quot;,
+						&quot;110&quot;,
+						&quot;24&quot;
+					],
+					&quot;port&quot;: &quot;9001&quot;,
+					&quot;path&quot;: [
+						&quot;invoke&quot;
+					]
+				}
+			},
+			&quot;response&quot;: []
+		},
+		{
+			&quot;name&quot;: &quot;fiat emition u1 100&quot;,
+			&quot;protocolProfileBehavior&quot;: {
+				&quot;followAuthorizationHeader&quot;: true
+			},
+			&quot;request&quot;: {
+				&quot;auth&quot;: {
+					&quot;type&quot;: &quot;noauth&quot;
+				},
+				&quot;method&quot;: &quot;POST&quot;,
+				&quot;header&quot;: [
+					{
+						&quot;key&quot;: &quot;Authorization&quot;,
+						&quot;value&quot;: &quot;Bearer test&quot;,
+						&quot;type&quot;: &quot;text&quot;
+					}
+				],
+				&quot;body&quot;: {
+					&quot;mode&quot;: &quot;raw&quot;,
+					&quot;raw&quot;: &quot;{\n  \&quot;args\&quot;: [\n    \&quot;Qko3RndGRnN1TjkxS29IRXZyY2ozdGRxRFl0VFZSZHhzQ1l2ckhrSFVmWDJSS0ZGTg==\&quot;,\n    \&quot;MTAw\&quot;\n  ],\n    \&quot;channel\&quot;:\&quot;fiat\&quot;,\n    \&quot;chaincodeId\&quot;:\&quot;fiat\&quot;,\n    \&quot;fcn\&quot;:\&quot;emit\&quot;\n}&quot;,
+					&quot;options&quot;: {
+						&quot;raw&quot;: {
+							&quot;language&quot;: &quot;json&quot;
+						}
+					}
+				},
+				&quot;url&quot;: {
+					&quot;raw&quot;: &quot;51.250.110.24:9001/invoke&quot;,
+					&quot;host&quot;: [
+						&quot;51&quot;,
+						&quot;250&quot;,
+						&quot;110&quot;,
+						&quot;24&quot;
+					],
+					&quot;port&quot;: &quot;9001&quot;,
+					&quot;path&quot;: [
+						&quot;invoke&quot;
+					]
+				}
+			},
+			&quot;response&quot;: []
+		},
+		{
+			&quot;name&quot;: &quot;observer get&quot;,
+			&quot;request&quot;: {
+				&quot;method&quot;: &quot;GET&quot;,
+				&quot;header&quot;: []
+			},
+			&quot;response&quot;: []
+		}
+	]
+}
+</code></pre>
+
+    </main>
+    <footer>&copy; Atomyze Sandbox</footer>
+  </body>
+</html>
