@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Atomyze Sandbox</title>
+
+    <link rel="stylesheet" href="/doc/css/site.css" />
+    <link
+      href="https://fonts.googleapis.com/css?family=Roboto+Slab:700|Roboto&display=fallback"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <header>
+      <a href="/doc/" class="link--home">Atomyze Sandbox</a>
+      <a href="/doc/" class="link--about">статьи</a>
+    </header>
+    <main>
+      <h2>Создание пользовательского адреса и криптоматериалов</h2>
+<p>В контексте данной статьи, пользователь - это название роли, за которую выступает физлицо, взаимодействующее с системой атомайз посредством транзакций.
+Авторизация пользовательской активности в системе атомайз производится через подпись пакета транзакции ключом ed25519. Таким образом, пользователь должен сгенерить свою пару ключей и адрес.</p>
+<h3>1. Создание пары пользовательской ключей ed25519 с помощью утилиты cli.</h3>
+<p>cli - утилита для вспомогательных операций, находится по адресу https://gitlab.project-karma.com/atomyze/cli</p>
+<p>TODO восстановить в репозитории.</p>
+<p>TODO закинуть cli --help</p>
+<h4>1.1 Генерация приватного ключа:</h4>
+<pre><code>./cli privkey
+</code></pre>
+<p>TODO - вставить скриншот результата работы</p>
+<h4>1.2 Генерация публичного ключа из приватного</h4>
+<p>Создается из приватного ключа, полученного на предыдущем этапе.</p>
+<pre><code>./cli pubkey -s &lt;privkey&gt;
+</code></pre>
+<p>TODO - вставить скриншот результата работы</p>
+<h4>1.3 Создание уникального адреса пользователя.</h4>
+<p>Адрес пользователя в системе атомайз <em><strong>изначально</strong></em> генерится на основании уникального публичного ключа.</p>
+<pre><code>./cli address -s &lt;privkey&gt;
+</code></pre>
+<h3>2. Создание пары пользовательских ключей ed25519 с помощью bash и openssl</h3>
+<p>Стандартная утилита openssl может быть использована для генерации криптоматериалов пользователя. Openssl кодирует криптоматериалы в формате PKCS и может записать их в формате base64 (-outform PEM) или бинарном RAW (-outform DER), таким образом приватный ключ имеет размер 48 байт, публичный 44 байта. Такой формат может быть не удобен для использования в  библиотеках, реализующих алгоритмы ed25519, где приватный ключ записан как 64 байта, бубличный -32 байта.</p>
+<h4>2.1 генерация приватного ключа</h4>
+<p>'''
+openssl genpkey -algorithm ed25519 -outform PEM -out test25519.pem
+cat test25519.pem
+-----BEGIN PRIVATE KEY-----
+MC4CAQAwBQYDK2VwBCIEIDKw+yBtFnM796bBvjIVgMacvR1jGh+4d/Phwcnd2vD/
+-----END PRIVATE KEY-----
+'''</p>
+<h3>2.2 генерация публичного ключа из приватного</h3>
+<pre><code>openssl pkey -in ed25519key.pem -pubout
+-----BEGIN PUBLIC KEY-----
+MCowBQYDK2VwAyEATCjiep6jcLx/AaV8CaNpE9/KfMFhPKCWr+RxMFWye1A=
+-----END PUBLIC KEY-----
+</code></pre>
+<h3>2.3 Получение 32-х байтного публичного ключа</h3>
+<pre><code>openssl pkey -in &quot;$1&quot; -pubout -outform DER | \  # параметр - имя файла с приватным PKCS ключом, получаем публичный PKCS в бинарном виде
+    dd ibs=&quot;12&quot; skip=1 | \                      # отделяем заголовок 12 байт, получаем публичную часть ключа 32 байта
+    base58 -c                                   # кодируем в base58check
+</code></pre>
+<p>Пример:</p>
+<pre><code>openssl pkey -in test25519.pem -pubout -outform DER | dd ibs=&quot;12&quot; skip=1 | base58 -c
+2+1 records in
+0+1 records out
+32 bytes copied, 0,0102328 s, 3,1 kB/s
+rHndwUtJwHRGKxEQG4A4WzPYGcLqDKUiCrN87bzNidkQBBpbz
+</code></pre>
+<h3>2.4 Получение 64-х байтного приватного ключа</h3>
+<pre><code>openssl pkey -in &quot;$1&quot; -outform DER | \  # параметр - имя файла с приватным PKCS ключом, получаем публичный PKCS в бинарном виде
+    dd ibs=&quot;14&quot; skip=1 | \                      # отделяем заголовок 14 байт, получаем публичную часть ключа 32 байта
+    base58 -c                                   # кодируем в base58check
+</code></pre>
+<p>Пример:</p>
+<pre><code>openssl pkey -in test25519.pem -outform DER | dd ibs=&quot;14&quot; skip=1 | base58 -c
+2+1 records in
+0+1 records out
+34 bytes copied, 0,00975185 s, 3,5 kB/s
+cPuyzxT7Wp1B7vB83bu51nYNEKP8UoW9Bsa4yGACGyV7vE3QziE
+</code></pre>
+<p>TODO склейка в баш</p>
+<p>Результат, приватный ключ в формате 64 байта:</p>
+<pre><code>cPuyzxT7Wp1B7vB83bu51nYNEKP8UoW9Bsa4yGACGyV7vE3QziErHndwUtJwHRGKxEQG4A4WzPYGcLqDKUiCrN87bzNidkQBBpbz
+</code></pre>
+<h3>2.5 получение адреса</h3>
+<pre><code>openssl pkey -in &quot;$1&quot; -pubout -outform DER | \  # параметр - имя файла с приватным PKCS ключом, получаем публичный PKCS в бинарном виде
+    dd ibs=&quot;12&quot; skip=1 | \                      # отделяем заголовок 12 байт, получаем публичную часть ключа 32 байта
+    openssl dgst -sha3-256 -binary | \          # берем хеш от публичного ключа
+    base58 -c                                   # кодируем в base58check
+</code></pre>
+<p>Пример:</p>
+<pre><code>openssl pkey -in test25519.pem -pubout -outform DER | dd ibs=&quot;12&quot; skip=1 |openssl dgst -sha3-256 -binary | base58 -c
+2+1 records in
+0+1 records out
+32 bytes copied, 0,0189481 s, 1,7 kB/s
+2ePfBX5Lk387pa1n1uQWVQJbjCvZQTyhKJFx91HVu3h475GAaZ
+</code></pre>
+<h2>Регистрация пользователя в системе атомайз</h2>
+<p>&quot;Администратор&quot; получает команду на регистрацию нового пользователя. В песочнице роль администратора исполняют сами разработчики ПО. Регистрация производится через вызов <em><strong>административной</strong></em> функции чейнкода ACL <em><strong>addUser</strong></em>.</p>
+<h3>1. Полученные данные от пользователей:</h3>
+<p>Пусть администратор получил следующие данные на регистрацию двух пользователей:</p>
+<pre><code>User1
+priv: MDUhrMo99dyddGZ8DWNvyHgDZgSUQfYwpxxC3rn51bXxeXRop2KonGTtsbs8xEx6RKrMFDFjDppbAHW9n94cNzX18A7Be
+pub: EKDFX61myHthVLU6q6TyKjD4AT3xDXc5cJFD8dDg2JZY
+address: BJ7FwFFsuN91KoHEvrcj3tdqDYtTVRdxsCYvrHkHUfX2RKFFN
+
+User2
+priv: G3EXhYTAsj1bgL8wYzVRu4w4gc6DJKaLCdFQBRkATS5UGtLkVRuh2SfsbJ5uPpo3rs13hRAMk1zYhW38dhxoatqTyoTZg
+pub: 4cjkbvtcABYpwotRpe1eT7TazR3BGkq6R7cFFDgF5e4i
+address: 29oZAgtgNziLHJS7L4bsoSsHXMYXBFufH77HDyxLsGrJaPrud4
+</code></pre>
+<h3>2.Вызов addUser</h3>
+<p>Взаимодействие с системой производим посредством сервиса hlf-proxy (https://gitlab.project-karma.com/atomyze/library/hlf-tool/hlf-proxy). HLF-proxy является частью стандартной поставки песочницы. Позволяет отправлять запросы query и invoke в систему атомайз на любой установленный чейнкод. Принимает запросы в формате REST.
+Документация, ссылка на swagger hlf-proxy http://51.250.110.24:9001/docs
+Параметры addUser:</p>
+<pre><code>pk - публичный ключ пользователя в кодировке base58
+kycHash - KYC хеш, не участвует в логике ACL. Для тестов можно использовать любой стринг.
+userId - связанный с пользователем идентификатор, не участвует в логике ACL. Для тестов можно использовать любой стринг.
+isIndustrial - флаг “true” или “false”
+</code></pre>
+<p>В таком случае у нас получается:</p>
+<p>Параметры для первого пользователя:</p>
+<pre><code>    &quot;EKDFX61myHthVLU6q6TyKjD4AT3xDXc5cJFD8dDg2JZY&quot;,
+    &quot;test&quot;,
+    &quot;u1&quot;,
+    &quot;true&quot;
+</code></pre>
+<p>Параметры для второго пользователя:</p>
+<pre><code>    &quot;4cjkbvtcABYpwotRpe1eT7TazR3BGkq6R7cFFDgF5e4i&quot;,
+    &quot;test&quot;,
+    &quot;u1&quot;,
+    &quot;true&quot;
+</code></pre>
+<p>Сервис hlf-proxy принимает аргументы вызываемой функции в формате base64, кодируем и приступаем к вызову функции регистрации пользователей.</p>
+<h4>Создание U1</h4>
+<pre><code>curl --location '51.250.110.24:9001/invoke' \
+--header 'Authorization: Bearer test' \
+--header 'Content-Type: application/json' \
+--data '{
+  &quot;args&quot;: [
+    &quot;RUtERlg2MW15SHRoVkxVNnE2VHlLakQ0QVQzeERYYzVjSkZEOGREZzJKWlk=&quot;,
+    &quot;dGVzdA==&quot;,
+    &quot;dTE=&quot;,
+    &quot;dHJ1ZQo=&quot;
+  ],
+    &quot;channel&quot;:&quot;acl&quot;,
+    &quot;chaincodeId&quot;:&quot;acl&quot;,
+    &quot;fcn&quot;:&quot;addUser&quot;
+}'
+</code></pre>
+<p>результат:</p>
+<pre><code>{
+    &quot;blockNumber&quot;: 9,
+    &quot;chaincodeStatus&quot;: 200,
+    &quot;transactionId&quot;: &quot;298f6a4434de01cfd5c830e22906b6511379990622f36294cec4fe43d9d2cb79&quot;
+}
+</code></pre>
+<h5>create U2</h5>
+<pre><code>curl --location '51.250.110.24:9001/invoke' \
+--header 'Authorization: Bearer test' \
+--header 'Content-Type: application/json' \
+--data '{
+  &quot;args&quot;: [
+    &quot;NGNqa2J2dGNBQllwd290UnBlMWVUN1RhelIzQkdrcTZSN2NGRkRnRjVlNGk=&quot;,
+    &quot;dGVzdA==&quot;,
+    &quot;dTI=&quot;,
+    &quot;dHJ1ZQo=&quot;
+  ],
+    &quot;channel&quot;:&quot;acl&quot;,
+    &quot;chaincodeId&quot;:&quot;acl&quot;,
+    &quot;fcn&quot;:&quot;addUser&quot;
+}'
+</code></pre>
+<p>Результат:</p>
+<pre><code>{
+    &quot;blockNumber&quot;: 10,
+    &quot;chaincodeStatus&quot;: 200,
+    &quot;transactionId&quot;: &quot;27d740819e346e6d492584113483d00a382d98cdfa6ef20c0de05c9abb725f16&quot;
+}
+</code></pre>
+
+    </main>
+    <footer>&copy; Atomyze Sandbox</footer>
+  </body>
+</html>
