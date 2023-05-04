@@ -16,3 +16,4 @@ layout: base-layout.njk
 Учебные матералы
 - [1. Батчинг атомайз](lectures/batching/)
 - [2. Аккаунтинг](lectures/accounting/)
+- [3. Практика1](lectures/practice1/)
