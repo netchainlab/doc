@@ -12,3 +12,7 @@ layout: base-layout.njk
 - [Организация сети атомайз и ее компоненты](posts/tmp_components/)
 - [Топология сети](posts/topology)
 - [](posts/)
+
+Учебные матералы
+- [1. Батчинг атомайз](lectures/batching/)
+- [2. Аккаунтинг](lectures/accounting/)
